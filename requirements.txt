@@ -4,5 +4,5 @@ streamlit
 scikit-learn
 openpyxl
 joblib
-weasyprint
+
 reportlab
