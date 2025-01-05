@@ -6,6 +6,7 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 from sklearn.preprocessing import LabelEncoder
 import joblib
+import numpy as np
 
 # Load the datasets
 credit_data = pd.read_excel('CreditWorthiness.xlsx', sheet_name='Data')
@@ -13,16 +14,7 @@ alt_data = pd.read_csv('alternative_dataset.csv')
 
 # Streamlit UI
 st.title("Loan Approval Prediction System")
-st.write("## Problem Statement")
-st.write("Real-Time Credit Risk Assessment Using Alternative Data")
-
-st.write("## Objective")
-st.write("Develop a system that assesses credit risk in real time by analyzing traditional financial data and alternative data sources like social media, utility payments, and spending habits.")
-
-st.write("## Approach")
-st.write("1. Aggregate and process alternative data sources alongside traditional credit information.")
-st.write("2. Use machine learning models to predict creditworthiness.")
-st.write("3. Provide lenders with transparent, explainable credit risk scores.")
+st.write("## Real-Time Credit Risk Assessment Using Alternative Data")
 
 # Merge datasets (assuming equal lengths and synthetic alignment)
 combined_data = pd.concat([credit_data, alt_data], axis=1)
@@ -40,6 +32,9 @@ for col in categorical_columns:
 X = combined_data.drop('Loan_Decision', axis=1)
 y = combined_data['Loan_Decision']
 
+# Save feature names for validation
+feature_names = X.columns
+
 # Split the data into training and testing sets
 X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_state=42)
 
@@ -47,67 +42,62 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.3, random_
 model = RandomForestClassifier(n_estimators=100, random_state=42)
 model.fit(X_train, y_train)
 
-# Predictions
-y_pred = model.predict(X_test)
-
-# Evaluate the model
-accuracy = accuracy_score(y_test, y_pred)
-report = classification_report(y_test, y_pred)
-conf_matrix = confusion_matrix(y_test, y_pred)
-
-# Display evaluation metrics in Streamlit
-st.write(f"### Model Accuracy: {accuracy * 100:.2f}%")
-st.write("### Classification Report")
-st.text(report)
-
-# Visualization
-st.write("### Visualizations")
-fig, ax = plt.subplots(1, 2, figsize=(14, 6))
-
-# Pie chart for loan decision distribution
-loan_counts = combined_data['Loan_Decision'].value_counts()
-ax[0].pie(loan_counts, labels=label_encoders['Loan_Decision'].classes_, autopct='%1.1f%%', startangle=140)
-ax[0].set_title("Loan Decision Distribution")
-
-# Feature importance bar plot
-importances = model.feature_importances_
-ax[1].barh(X.columns, importances)
-ax[1].set_xlabel('Importance')
-ax[1].set_ylabel('Features')
-ax[1].set_title('Feature Importance for Loan Prediction')
-
-st.pyplot(fig)
-
 # Save model and encoders
 joblib.dump(model, 'loan_prediction_model.pkl')
 joblib.dump(label_encoders, 'label_encoders.pkl')
+joblib.dump(feature_names, 'feature_names.pkl')
 
-uploaded_excel = st.file_uploader("Upload Credit Worthiness Data (Excel)", type=["xlsx"])
-uploaded_csv = st.file_uploader("Upload Alternative Data (CSV)", type=["csv"])
+# User Loan Enquiry Section
+st.write("## Loan Enquiry Form")
 
-if uploaded_excel is not None and uploaded_csv is not None:
-    credit_data = pd.read_excel(uploaded_excel, sheet_name='Data')
-    alt_data = pd.read_csv(uploaded_csv)
-    combined_data = pd.concat([credit_data, alt_data], axis=1)
+with st.form(key='loan_form'):
+    name = st.text_input("Name")
+    age = st.number_input("Age", min_value=18, max_value=100, step=1)
+    income = st.number_input("Monthly Income", min_value=0)
+    employment_status = st.selectbox("Employment Status", ['Employed', 'Self-Employed', 'Unemployed'])
+    credit_score = st.number_input("Credit Score", min_value=300, max_value=850, step=1)
+    loan_amount = st.number_input("Loan Amount", min_value=1000)
+    loan_purpose = st.selectbox("Loan Purpose", ['Home', 'Education', 'Business', 'Medical'])
+    submit_button = st.form_submit_button("Submit")
 
-    for col in categorical_columns:
-        if col in combined_data.columns:
-            combined_data[col] = label_encoders[col].transform(combined_data[col].astype(str))
-    
-    predictions = model.predict(combined_data.drop('Loan_Decision', axis=1))
-    combined_data['Loan_Prediction'] = label_encoders['Loan_Decision'].inverse_transform(predictions)
+    if submit_button:
+        # Randomly select alternative data
+        random_alt_data = alt_data.sample(n=1).reset_index(drop=True)
 
-    st.write("### Predictions")
-    st.dataframe(combined_data)
-
-    st.write("### Visualization")
-    plt.figure(figsize=(6, 5))
-    plt.imshow(conf_matrix, interpolation='nearest', cmap=plt.cm.Blues)
-    plt.title('Confusion Matrix')
-    plt.colorbar()
-    tick_marks = range(len(label_encoders['Loan_Decision'].classes_))
-    plt.xticks(tick_marks, label_encoders['Loan_Decision'].classes_)
-    plt.yticks(tick_marks, label_encoders['Loan_Decision'].classes_)
-    plt.ylabel('True label')
-    plt.xlabel('Predicted label')
-    st.pyplot(plt)
+        # Combine user input with random alternative data
+        user_data = pd.DataFrame(random_alt_data)
+        user_data['Age'] = age
+        user_data['Income'] = income
+        user_data['Employment_Status'] = employment_status
+        user_data['Credit_Score'] = credit_score
+        user_data['Loan_Amount'] = loan_amount
+        user_data['Loan_Purpose'] = loan_purpose
+        
+        # Display user submitted data with random alternative data
+        st.write("### Combined User Data and Alternative Data")
+        st.dataframe(user_data)
+        
+        # Encode user data
+        for col in user_data.columns:
+            if col in label_encoders:
+                user_data[col] = label_encoders[col].transform(user_data[col].astype(str))
+        
+        # Align user data with training features
+        user_data = user_data.reindex(columns=feature_names, fill_value=0)
+        
+        # Predict loan eligibility and probabilities
+        prediction = model.predict(user_data)
+        prediction_proba = model.predict_proba(user_data)
+        loan_result = label_encoders['Loan_Decision'].inverse_transform(prediction)
+        
+        # Extract feature importances and provide reason for denial
+        if loan_result[0] == 'Denied':
+            importances = model.feature_importances_
+            most_important_features = np.argsort(importances)[-3:][::-1]
+            reasons = feature_names[most_important_features]
+            st.write(f"### Loan Prediction for {name}: Denied")
+            st.write("#### Top Reasons for Denial:")
+            for reason in reasons:
+                st.write(f"- {reason}")
+        else:
+            st.write(f"### Loan Prediction for {name}: Approved")
