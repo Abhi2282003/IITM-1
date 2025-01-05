@@ -1,0 +1,247 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Loan Application Progress Report</title>
+  <style>
+    /* --- Global Resets & Fonts --- */
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+      background-color: #0f3933; /* Dark green background */
+      color: #333;
+    }
+
+    .report-container {
+      width: 800px;
+      margin: 40px auto;
+      background-color: #ffffff;
+      padding: 30px 40px;
+      border-radius: 8px;
+    }
+
+    /* --- Header Styles --- */
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 30px;
+    }
+
+    .header-left {
+      max-width: 60%;
+    }
+
+    .header-left h1 {
+      font-size: 28px;
+      color: #016a5b; /* Main heading in a slightly lighter teal */
+      margin: 0 0 10px 0;
+    }
+
+    .header-left p {
+      margin: 0;
+      color: #666;
+      line-height: 1.5;
+    }
+
+    .header-right {
+      text-align: right;
+    }
+
+    .header-right h2 {
+      font-size: 16px;
+      margin: 0;
+      text-transform: uppercase;
+      color: #016a5b;
+    }
+
+    .header-right p {
+      margin: 5px 0 0 0;
+      color: #999;
+      font-size: 14px;
+    }
+
+    /* --- Section Titles --- */
+    h3.section-title {
+      font-size: 20px;
+      color: #016a5b;
+      margin-bottom: 10px;
+    }
+
+    /* --- Progress (Bar Charts) --- */
+    .progress-container {
+      margin: 20px 0;
+    }
+
+    .progress-bar {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .progress-bar-label {
+      width: 80px;
+      font-size: 14px;
+      color: #333;
+    }
+
+    .progress-bar-track {
+      flex: 1;
+      background-color: #e5e5e5;
+      height: 10px;
+      margin: 0 10px;
+      border-radius: 5px;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      background-color: #016a5b;
+      height: 100%;
+      border-radius: 5px;
+      transition: width 0.3s ease-in-out;
+    }
+
+    .progress-bar-value {
+      width: 40px;
+      font-size: 14px;
+      color: #333;
+      text-align: right;
+    }
+
+    /* --- Info Boxes (Challenges / Steps) --- */
+    .info-steps {
+      display: flex;
+      gap: 10px;
+      margin: 20px 0;
+    }
+
+    .info-step {
+      flex: 1;
+      background-color: #dff1ee; 
+      border-radius: 6px;
+      padding: 10px;
+    }
+
+    .info-step h4 {
+      margin: 0 0 5px 0;
+      color: #016a5b;
+      font-size: 14px;
+      text-transform: uppercase;
+    }
+
+    .info-step p {
+      margin: 0;
+      font-size: 13px;
+      color: #555;
+    }
+
+    /* --- Next Steps Section --- */
+    .next-steps {
+      margin-top: 20px;
+    }
+
+    .next-steps p {
+      margin: 6px 0;
+      color: #555;
+      line-height: 1.5;
+    }
+
+    /* --- Footer or Extra Elements --- */
+    .footer {
+      margin-top: 30px;
+      text-align: center;
+      font-size: 12px;
+      color: #666;
+    }
+  </style>
+</head>
+<body>
+  <div class="report-container">
+    <!-- HEADER -->
+    <div class="header">
+      <div class="header-left">
+        <h1>Loan Application Progress Report</h1>
+        <p>
+          Lorem ipsum dolor sit amet, consectetur adipiscing elit. 
+          Morbi eget dolor eu magna facilisis sodales.
+        </p>
+      </div>
+      <div class="header-right">
+        <h2>COMPANY NAME</h2>
+        <p>21/10/2025</p>
+      </div>
+    </div>
+
+    <!-- PROGRESS SECTION -->
+    <h3 class="section-title">Progress</h3>
+    <p>
+      Below is a snapshot of the loan application progress across different milestones 
+      (e.g., Document Collection, Verification, Underwriting). 
+    </p>
+    <div class="progress-container">
+      <!-- Example bars: replace these with your own data -->
+      <div class="progress-bar">
+        <div class="progress-bar-label">2024</div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width: 80%;"></div>
+        </div>
+        <div class="progress-bar-value">80%</div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-bar-label">2023</div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width: 60%;"></div>
+        </div>
+        <div class="progress-bar-value">60%</div>
+      </div>
+
+      <div class="progress-bar">
+        <div class="progress-bar-label">2022</div>
+        <div class="progress-bar-track">
+          <div class="progress-bar-fill" style="width: 40%;"></div>
+        </div>
+        <div class="progress-bar-value">40%</div>
+      </div>
+    </div>
+
+    <!-- CHALLENGES or Key Observations -->
+    <h3 class="section-title">Key Observations</h3>
+    <p>
+      Summarize any major challenges, observations, or issues encountered during the loan process.
+    </p>
+    <div class="info-steps">
+      <div class="info-step">
+        <h4>STEP 1</h4>
+        <p>Initial Document Submission, 80% Completed.</p>
+      </div>
+      <div class="info-step">
+        <h4>STEP 2</h4>
+        <p>Verification in progress, 60% Completed.</p>
+      </div>
+      <div class="info-step">
+        <h4>STEP 3</h4>
+        <p>Credit Underwriting, 40% Completed.</p>
+      </div>
+      <div class="info-step">
+        <h4>STEP 4</h4>
+        <p>Pending final approval. Next steps below.</p>
+      </div>
+    </div>
+
+    <!-- NEXT STEPS -->
+    <h3 class="section-title">Next Steps</h3>
+    <div class="next-steps">
+      <p>1. Complete final verification checks (income, references).</p>
+      <p>2. Finalize underwriting decision by next quarter.</p>
+      <p>3. Notify applicant of approval or additional requirements.</p>
+    </div>
+
+    <!-- FOOTER (optional) -->
+    <div class="footer">
+      &copy; 2025 Company Name | For internal use only
+    </div>
+  </div>
+</body>
+</html>
