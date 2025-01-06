@@ -19,11 +19,10 @@ st.set_page_config(
 )
 
 # -------------------- FEATURE DEFINITIONS --------------------
-# Define all categorical features used in both alternative and creditworthiness data
 CATEGORICAL_FEATURES = [
-    # Alternative categorical features
-   
-    # Creditworthiness categorical features
+    "Social_Media_Activity",
+    "Utility_Payment_Timeliness",
+    "Geolocation_Stability",
     "Chist",
     "Cpur",
     "MSG",
@@ -35,9 +34,7 @@ CATEGORICAL_FEATURES = [
     "foreign"
 ]
 
-# Define all numerical features with their respective ranges
 NUMERICAL_FEATURES = {
-    # Alternative numerical features
     "Online_Shopping_Frequency": [0, 10],
     "Mobile_Usage_Hours": [0, 12],
     "App_Subscriptions": [0, 20],
@@ -46,8 +43,6 @@ NUMERICAL_FEATURES = {
     "Ride_Sharing_Usage": [0, 30],
     "Smart_Device_Usage_Hours": [0, 24],
     "Digital_Payment_Transactions": [0, 50],
-    
-    # Creditworthiness numerical features
     "Cbal": [100, 5000],
     "Cdur": [1, 60],
     "Camt": [1000, 50000],
@@ -62,7 +57,6 @@ NUMERICAL_FEATURES = {
     "creditScore": [300, 850]
 }
 
-# Define important fields for the report
 IMPORTANT_APPLICANT_FIELDS = [
     "Name", "Age", "Income", "Employment_Status",
     "Loan_Amount", "Loan_Purpose", "Status"
@@ -98,7 +92,7 @@ def ensure_all_categories(df, feature, categories):
     if missing_categories:
         # Create synthetic rows for missing categories
         synthetic_rows = pd.DataFrame({feature: missing_categories})
-        # For other features, assign default or NaN values
+        # For other features, assign default or 'unknown' values
         for col in df.columns:
             if col != feature:
                 if df[col].dtype == 'object':
@@ -112,12 +106,18 @@ def ensure_all_categories(df, feature, categories):
 def encode_categorical(df):
     """
     Label-encode all categorical (object-type) columns and return the encoders.
+    Adds an 'unknown' category to handle unseen data.
     """
     encoders = {}
     cat_cols = df.select_dtypes(include=["object"]).columns
     for col in cat_cols:
         le = LabelEncoder()
-        df[col] = le.fit_transform(df[col])
+        df[col] = df[col].fillna('unknown')  # Handle NaN values
+        # Check if 'unknown' is already a category
+        if 'unknown' not in df[col].unique():
+            df[col] = df[col].astype(str) + '_unknown'
+        le.fit(df[col])
+        df[col] = le.transform(df[col])
         encoders[col] = le
     return df, encoders
 
@@ -324,7 +324,96 @@ def save_application_features(df):
     except Exception as e:
         st.error(f"Error saving 'application_features.csv': {e}")
 
-# -------------------- APPLICATION FEATURES HANDLING --------------------
+def encode_application_data(app_features, label_encoders):
+    """
+    Encode application data using the provided label encoders.
+    Handles unknown categories by assigning them to 'unknown'.
+    """
+    encoded_features = {}
+    for col in CATEGORICAL_FEATURES:
+        value = app_features.get(col, 'unknown')
+        if pd.isna(value) or value == '':
+            value = 'unknown'
+        value = str(value).lower().strip()
+        if value not in label_encoders[col].classes_:
+            # Assign to 'unknown'
+            if 'unknown' in label_encoders[col].classes_:
+                value = 'unknown'
+            else:
+                # If 'unknown' not in classes, add it
+                label_encoders[col].classes_ = np.append(label_encoders[col].classes_, 'unknown')
+                value = 'unknown'
+        encoded_features[col] = label_encoders[col].transform([value])[0]
+    
+    for col in NUMERICAL_FEATURES.keys():
+        encoded_features[col] = app_features.get(col, 0)
+    
+    return pd.DataFrame([encoded_features])
+
+def delete_application(application_id, username=None, user_type="customer"):
+    """
+    Delete an application from 'applications.csv' and 'application_features.csv'.
+    For customers, ensure they can only delete their own applications.
+    For bank admins, they can delete any application.
+    """
+    # Load applications
+    if os.path.exists("applications.csv"):
+        try:
+            apps_df = pd.read_csv("applications.csv", dtype={"Application_ID": str})
+        except Exception as e:
+            st.error(f"Error loading 'applications.csv': {e}")
+            return False
+    else:
+        st.error("'applications.csv' does not exist.")
+        return False
+    
+    # Check if application exists
+    if application_id not in apps_df["Application_ID"].values:
+        st.error(f"Application ID {application_id} not found.")
+        return False
+    
+    # For customers, verify ownership
+    if user_type == "customer":
+        app_row = apps_df[apps_df["Application_ID"] == application_id].iloc[0]
+        if app_row["Username"] != username:
+            st.error("You can only delete your own applications.")
+            return False
+    
+    # Confirm deletion
+    confirm = st.checkbox(f"Are you sure you want to delete Application ID {application_id}? This action cannot be undone.")
+    if confirm:
+        # Delete from applications.csv
+        apps_df = apps_df[apps_df["Application_ID"] != application_id]
+        try:
+            apps_df.to_csv("applications.csv", index=False)
+        except Exception as e:
+            st.error(f"Error saving 'applications.csv': {e}")
+            return False
+        
+        # Delete from application_features.csv
+        if os.path.exists("application_features.csv"):
+            try:
+                features_df = pd.read_csv("application_features.csv", dtype={"Application_ID": str})
+                features_df = features_df[features_df["Application_ID"] != application_id]
+                features_df.to_csv("application_features.csv", index=False)
+            except Exception as e:
+                st.error(f"Error updating 'application_features.csv': {e}")
+                return False
+        else:
+            st.warning("'application_features.csv' does not exist.")
+        
+        # Update session state
+        if "applications" in st.session_state:
+            st.session_state.applications = apps_df
+        
+        if "application_features" in st.session_state:
+            st.session_state.application_features = features_df
+        
+        st.success(f"Application ID {application_id} has been successfully deleted.")
+        return True
+    else:
+        st.info("Deletion not confirmed.")
+        return False
 
 # -------------------- MODEL ARTIFACTS LOADING --------------------
 model, label_encoders, feature_names = load_model_artifacts()
@@ -484,6 +573,22 @@ if st.session_state.authenticated:
 
                 # Display applications excluding 'Username'
                 st.dataframe(user_apps.drop(["Username"], axis=1), use_container_width=True)
+
+                st.markdown("### Delete an Application")
+                app_to_delete = st.selectbox(
+                    "Select Application ID to Delete",
+                    user_apps["Application_ID"].unique()
+                )
+                delete_button = st.button("Delete Selected Application", key="delete_customer")
+
+                if delete_button:
+                    delete_success = delete_application(
+                        application_id=app_to_delete,
+                        username=st.session_state.username,
+                        user_type="customer"
+                    )
+                    if delete_success:
+                        st.experimental_rerun()  # Refresh the app to reflect changes
             else:
                 st.info("You have no applications submitted yet.")
 
@@ -521,8 +626,12 @@ if st.session_state.authenticated:
                             # Generate random data for categorical features using LabelEncoder's classes_
                             for feature in CATEGORICAL_FEATURES:
                                 if feature in label_encoders:
-                                    # Select a random category from known classes
-                                    random_category = random.choice(label_encoders[feature].classes_)
+                                    # Select a random category from known classes excluding 'unknown'
+                                    possible_categories = [cls for cls in label_encoders[feature].classes_ if cls != 'unknown']
+                                    if possible_categories:
+                                        random_category = random.choice(possible_categories)
+                                    else:
+                                        random_category = 'unknown'
                                     random_data[feature] = random_category
                                 else:
                                     st.error(f"Error: No LabelEncoder found for categorical feature '{feature}'.")
@@ -549,23 +658,7 @@ if st.session_state.authenticated:
                             st.success("Generated and saved new features for prediction.")
                         
                         # ---------------------- LABEL ENCODING ----------------------
-                        # Create a copy to avoid modifying the original data
-                        encoded_features = {}
-                        for col in CATEGORICAL_FEATURES:
-                            if col in label_encoders:
-                                try:
-                                    encoded_features[col] = label_encoders[col].transform([app_features[col]])[0]
-                                except ValueError as e:
-                                    st.error(f"Encoding Error in column '{col}': {e}")
-                                    st.stop()
-                            else:
-                                encoded_features[col] = 0  # Default value or handle appropriately
-                        
-                        for col in NUMERICAL_FEATURES.keys():
-                            encoded_features[col] = app_features[col]
-                        
-                        # Convert to DataFrame
-                        encoded_df = pd.DataFrame([encoded_features])
+                        encoded_df = encode_application_data(app_features, label_encoders)
                         
                         # ---------------------- FEATURE ALIGNMENT ----------------------
                         # Ensure the DataFrame has all required features
@@ -628,6 +721,9 @@ if st.session_state.authenticated:
                                 display_value = value
                         else:
                             display_value = value
+                        # Replace 'unknown_unknown' with 'Unknown'
+                        if display_value == 'unknown_unknown':
+                            display_value = 'Unknown'
                         report_data["Generated Features"][feature.replace('_', ' ')] = display_value
 
                     # Populate Model Prediction
@@ -660,7 +756,13 @@ if st.session_state.authenticated:
                             with cols_features[idx % 2]:
                                 st.write(f"**{key}:** {value}")
 
-                    
+                    # Model Prediction
+                    with st.container():
+                        st.markdown("#### 🤖 Model Prediction")
+                        if report_data["Model Prediction"] != "Pending":
+                            st.success(f"**{report_data['Model Prediction']}**")
+                        else:
+                            st.warning("Model prediction is pending.")
 
                     # ---------------------- DOWNLOAD REPORT ----------------------
                     # Prepare report data for download
@@ -700,6 +802,18 @@ if st.session_state.authenticated:
                         file_name=f"LoanReport_{selected_app_id}.txt",
                         mime="text/plain"
                     )
+
+                # 3. Delete Application
+                st.markdown("### Delete an Application")
+                delete_button_bank = st.button("Delete Selected Application", key="delete_bank")
+
+                if delete_button_bank:
+                    delete_success = delete_application(
+                        application_id=selected_app_id,
+                        user_type="bank"
+                    )
+                    if delete_success:
+                        st.experimental_rerun()  # Refresh the app to reflect changes
 
                 st.markdown("---")
                 st.write("### Update Application Status")
