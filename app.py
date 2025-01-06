@@ -22,10 +22,7 @@ st.set_page_config(
 # Define all categorical features used in both alternative and creditworthiness data
 CATEGORICAL_FEATURES = [
     # Alternative categorical features
-    
-    "Utility_Payment_Timeliness",
-    "Geolocation_Stability",
-    
+   
     # Creditworthiness categorical features
     "Chist",
     "Cpur",
