@@ -857,9 +857,9 @@ if st.session_state.authenticated:
                             "Applicant Information": {
                                 "Name": app_row['Name'],
                                 "Age": app_row['Age'],
-                                "Monthly Income": f"${app_row['Income']}",
+                                "Monthly Income": f"{app_row['Income']}",
                                 "Employment Status": app_row['Employment_Status'],
-                                "Loan Amount Requested": f"${app_row['Loan_Amount']}",
+                                "Loan Amount Requested": f"{app_row['Loan_Amount']}",
                                 "Loan Purpose": app_row['Loan_Purpose'],
                                 "Current Status": app_row['Status']
                             },
