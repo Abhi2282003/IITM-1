@@ -587,12 +587,12 @@ if st.session_state.authenticated:
                 with st.form("loan_form"):
                     name = st.text_input("Full Name", max_chars=100)
                     age = st.slider("Age", 18, 100, 30)
-                    income = st.number_input("Monthly Income ($)", min_value=0, value=5000, step=500)
+                    income = st.number_input("Monthly Income", min_value=0, value=5000, step=500)
                     employment_status = st.selectbox(
                         "Employment Status", 
                         ["Employed", "Self-Employed", "Unemployed"]
                     )
-                    loan_amount = st.number_input("Loan Amount ($)", min_value=1000, value=10000, step=1000)
+                    loan_amount = st.number_input("Loan Amount", min_value=1000, value=10000, step=1000)
                     loan_purpose = st.selectbox("Loan Purpose", ["Home", "Education", "Business", "Medical"])
                     
                     # -------- TERMS AND CONDITIONS -------------
