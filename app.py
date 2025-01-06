@@ -599,13 +599,7 @@ if st.session_state.authenticated:
                     st.markdown("""---""")
                     st.markdown("#### Terms & Conditions")
                     
-                    if "show_tnc" not in st.session_state:
-                        st.session_state.show_tnc = False
-                    
-                    if st.button("View Terms & Conditions"):
-                        st.session_state.show_tnc = True
-
-                    if st.session_state.show_tnc:
+                    with st.expander("View Terms & Conditions"):
                         st.write("""
                         **User Consent Request for Data Access**
 
@@ -637,13 +631,10 @@ if st.session_state.authenticated:
                         mentioned above. We guarantee that your data will be handled securely, and your privacy is 
                         our top priority.
                         """)
-
-                        st.markdown("""---""")
-                        consent_given = st.checkbox(
-                            "I agree to allow [Your Company Name] to access my data as outlined above."
-                        )
-                    else:
-                        consent_given = False
+                    
+                    consent_given = st.checkbox(
+                        "I agree to allow [Your Company Name] to access my data as outlined above."
+                    )
 
                     submit_button = st.form_submit_button("Submit Application")
 
@@ -728,7 +719,7 @@ if st.session_state.authenticated:
                         st.markdown("### 📑 Assigned Loan Schemes for Approved Applications")
                         for _, app in approved_apps.iterrows():
                             st.markdown(f"**Application ID:** {app['Application_ID']}")
-
+    
                             if pd.notna(app['Assigned_Scheme']) and pd.notna(app['Assigned_Bank']):
                                 # Find the scheme details
                                 scheme_details = next((scheme for scheme in ALL_LOAN_SCHEMES if scheme["Scheme Name"] == app['Assigned_Scheme'] and scheme["Bank"] == app['Assigned_Bank']), None)
