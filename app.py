@@ -933,13 +933,6 @@ if st.session_state.authenticated:
                             else:
                                 st.warning("No loan scheme has been assigned to this application yet.")
 
-                        # Model Prediction
-                        with st.container():
-                            st.markdown("#### 🤖 Model Prediction")
-                            if report_data["Model Prediction"] != "Pending":
-                                st.success(f"**{report_data['Model Prediction']}**")
-                            else:
-                                st.warning("Model prediction is pending.")
 
                         # ---------------------- DOWNLOAD REPORT ----------------------
                         # Prepare report data for download
