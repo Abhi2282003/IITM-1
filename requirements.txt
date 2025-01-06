@@ -5,5 +5,5 @@ scikit-learn
 openpyxl
 joblib
 pdfcrowd
-
+streamlit-chat
 reportlab
