@@ -6,7 +6,6 @@ import random
 from datetime import datetime
 import os
 
-from weasyprint import HTML  # For converting HTML to PDF in memory
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
@@ -65,6 +64,22 @@ NUMERICAL_FEATURES = {
     "Ndepend": [0, 5],
     "creditScore": [300, 850]
 }
+
+# Define important fields for the report
+IMPORTANT_APPLICANT_FIELDS = [
+    "Name", "Age", "Income", "Employment_Status",
+    "Loan_Amount", "Loan_Purpose", "Status"
+]
+
+IMPORTANT_GENERATED_FEATURES = [
+    "Social_Media_Activity",
+    "Utility_Payment_Timeliness",
+    "Geolocation_Stability",
+    "Chist",
+    "Cpur",
+    "JobType",
+    "creditScore"
+]
 
 # -------------------- UTILITY FUNCTIONS --------------------
 def standardize_categorical(df):
@@ -283,224 +298,6 @@ def generate_application_id():
     """
     return datetime.now().strftime("APP-%Y%m%d%H%M%S%f")
 
-def generate_report_html(application_data, feature_data):
-    """
-    Generate an HTML report for the loan application using descriptive feature values.
-    
-    :param application_data: Dictionary containing application details.
-    :param feature_data: Dictionary containing generated feature values.
-    """
-    app_id = application_data.get("Application_ID", "N/A")
-    name = application_data.get("Name", "N/A")
-    age = application_data.get("Age", "N/A")
-    income = application_data.get("Income", "N/A")
-    emp_status = application_data.get("Employment_Status", "N/A")
-    loan_amount = application_data.get("Loan_Amount", "N/A")
-    loan_purpose = application_data.get("Loan_Purpose", "N/A")
-    status = application_data.get("Status", "N/A")
-    submission_time = application_data.get("Submission_Time", "N/A")
-    
-    # Retrieve feature data with proper formatting
-    def get_feature_display(feature_name):
-        value = feature_data.get(feature_name, "N/A")
-        if feature_name in CATEGORICAL_FEATURES:
-            return value.replace("_", " ").capitalize()
-        return value
-
-    social_media_activity = get_feature_display("Social_Media_Activity")
-    utility_payment_timeliness = get_feature_display("Utility_Payment_Timeliness")
-    geolocation_stability = get_feature_display("Geolocation_Stability")
-    chist = get_feature_display("Chist")
-    cpur = get_feature_display("Cpur")
-    msg = get_feature_display("MSG")
-    prop = get_feature_display("Prop")
-    inPlans = get_feature_display("inPlans")
-    htype = get_feature_display("Htype")
-    jobType = get_feature_display("JobType")
-    telephone = get_feature_display("telephone")
-    foreign = get_feature_display("foreign")
-    
-    # Example “progress” values to mimic bar chart visuals:
-    doc_collection_percent = 70
-    verification_percent = 50
-    underwriting_percent = 30
-    
-    html_content = f"""
-    <!DOCTYPE html>
-    <html lang="en">
-    <head>
-      <meta charset="UTF-8" />
-      <title>Loan Report - {app_id}</title>
-      <style>
-        body {{
-          margin: 0; padding: 0;
-          font-family: Arial, sans-serif;
-          background-color: #f2f2f2;
-        }}
-        .report-container {{
-          width: 800px;
-          margin: 40px auto;
-          background-color: #ffffff;
-          padding: 30px 40px;
-          border-radius: 8px;
-          box-shadow: 0 0 10px rgba(0,0,0,0.1);
-        }}
-        .header {{
-          display: flex; justify-content: space-between; align-items: flex-start;
-          margin-bottom: 30px;
-        }}
-        .header-left h1 {{
-          font-size: 28px;
-          color: #2E86C1;
-          margin: 0 0 10px 0;
-        }}
-        .header-left p {{
-          margin: 0; color: #555; line-height: 1.5;
-        }}
-        .header-right h2 {{
-          font-size: 16px;
-          margin: 0; text-transform: uppercase; color: #2E86C1;
-        }}
-        .header-right p {{
-          margin: 5px 0 0 0; color: #888; font-size: 14px;
-        }}
-        h3.section-title {{
-          font-size: 20px; color: #2E86C1; margin-bottom: 10px;
-        }}
-        .progress-container {{
-          margin: 20px 0;
-        }}
-        .progress-bar {{
-          display: flex; align-items: center; margin-bottom: 10px;
-        }}
-        .progress-bar-label {{
-          width: 150px; font-size: 14px; color: #333;
-        }}
-        .progress-bar-track {{
-          flex: 1; background-color: #e5e5e5; height: 10px; margin: 0 10px;
-          border-radius: 5px; position: relative;
-        }}
-        .progress-bar-fill {{
-          background-color: #2E86C1; height: 100%; border-radius: 5px;
-          transition: width 0.3s ease-in-out;
-        }}
-        .progress-bar-value {{
-          width: 40px; font-size: 14px; color: #333; text-align: right;
-        }}
-        .info-block {{
-          margin: 20px 0;
-        }}
-        .info-block p {{
-          margin: 6px 0; line-height: 1.5; color: #555;
-        }}
-        .footer {{
-          margin-top: 30px; text-align: center; font-size: 12px; color: #888;
-        }}
-      </style>
-    </head>
-    <body>
-      <div class="report-container">
-        <!-- Header -->
-        <div class="header">
-          <div class="header-left">
-            <h1>Loan Application Report</h1>
-            <p>Application ID: {app_id}</p>
-          </div>
-          <div class="header-right">
-            <h2>Your Bank Name</h2>
-            <p>{datetime.now().strftime("%d/%m/%Y")}</p>
-          </div>
-        </div>
-
-        <!-- Applicant Info -->
-        <h3 class="section-title">Applicant Information</h3>
-        <div class="info-block">
-          <p><strong>Name:</strong> {name}</p>
-          <p><strong>Age:</strong> {age}</p>
-          <p><strong>Monthly Income:</strong> ${income}</p>
-          <p><strong>Employment Status:</strong> {emp_status}</p>
-          <p><strong>Loan Amount Requested:</strong> ${loan_amount}</p>
-          <p><strong>Loan Purpose:</strong> {loan_purpose}</p>
-          <p><strong>Current Status:</strong> {status}</p>
-          <p><strong>Submission Time:</strong> {submission_time}</p>
-        </div>
-
-        <!-- Generated Features -->
-        <h3 class="section-title">Generated Features</h3>
-        <div class="info-block">
-          <p><strong>Social Media Activity:</strong> {social_media_activity}</p>
-          <p><strong>Utility Payment Timeliness:</strong> {utility_payment_timeliness}</p>
-          <p><strong>Geolocation Stability:</strong> {geolocation_stability}</p>
-          <p><strong>Credit History:</strong> {chist}</p>
-          <p><strong>Credit Purpose:</strong> {cpur}</p>
-          <p><strong>Marital Status:</strong> {msg}</p>
-          <p><strong>Property Ownership:</strong> {prop}</p>
-          <p><strong>In Plans:</strong> {inPlans}</p>
-          <p><strong>Housing Type:</strong> {htype}</p>
-          <p><strong>Job Type:</strong> {jobType}</p>
-          <p><strong>Telephone Ownership:</strong> {telephone}</p>
-          <p><strong>Foreign:</strong> {foreign}</p>
-        </div>
-
-        <!-- Progress Section -->
-        <h3 class="section-title">Progress</h3>
-        <p>This section shows the hypothetical progress of your loan application.</p>
-        <div class="progress-container">
-          <div class="progress-bar">
-            <div class="progress-bar-label">Document Collection</div>
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" style="width: {doc_collection_percent}%;"></div>
-            </div>
-            <div class="progress-bar-value">{doc_collection_percent}%</div>
-          </div>
-
-          <div class="progress-bar">
-            <div class="progress-bar-label">Verification</div>
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" style="width: {verification_percent}%;"></div>
-            </div>
-            <div class="progress-bar-value">{verification_percent}%</div>
-          </div>
-
-          <div class="progress-bar">
-            <div class="progress-bar-label">Underwriting</div>
-            <div class="progress-bar-track">
-              <div class="progress-bar-fill" style="width: {underwriting_percent}%;"></div>
-            </div>
-            <div class="progress-bar-value">{underwriting_percent}%</div>
-          </div>
-        </div>
-
-        <!-- Next Steps -->
-        <h3 class="section-title">Next Steps</h3>
-        <div class="info-block">
-          <p>1. Complete pending verifications (income, identity).</p>
-          <p>2. Finalize underwriting decision.</p>
-          <p>3. Notify applicant of final approval/denial.</p>
-        </div>
-
-        <!-- Footer -->
-        <div class="footer">
-          &copy; {datetime.now().year} Your Bank Name | Confidential
-        </div>
-      </div>
-    </body>
-    </html>
-    """
-    return html_content
-
-def html_to_pdf(html_string):
-    """
-    Convert the given HTML string to PDF bytes using WeasyPrint.
-    """
-    try:
-        pdf_bytes = HTML(string=html_string).write_pdf()
-        return pdf_bytes
-    except Exception as e:
-        st.error(f"Error generating PDF: {e}")
-        return None
-
-# -------------------- APPLICATION FEATURES HANDLING --------------------
 def init_application_features():
     """
     Load existing application features from 'application_features.csv' or initialize a new DataFrame.
@@ -529,6 +326,8 @@ def save_application_features(df):
         df.to_csv("application_features.csv", index=False)
     except Exception as e:
         st.error(f"Error saving 'application_features.csv': {e}")
+
+# -------------------- APPLICATION FEATURES HANDLING --------------------
 
 # -------------------- MODEL ARTIFACTS LOADING --------------------
 model, label_encoders, feature_names = load_model_artifacts()
@@ -796,8 +595,8 @@ if st.session_state.authenticated:
                         
                         st.write(f"**Model Prediction:** {suggested_status}")
 
-                # 2. View/Generate PDF Report
-                if st.button("View / Generate Report", key="report_btn"):
+                # 2. View Report
+                if st.button("View Report", key="report_btn"):
                     # Retrieve feature data
                     features_df = st.session_state.application_features
                     if selected_app_id in features_df["Application_ID"].values:
@@ -806,21 +605,104 @@ if st.session_state.authenticated:
                         st.warning("No features found for this application. Please generate prediction first.")
                         st.stop()
                     
-                    html_report = generate_report_html(app_row.to_dict(), feature_row)
+                    # Define the report data
+                    report_data = {
+                        "Applicant Information": {
+                            "Name": app_row['Name'],
+                            "Age": app_row['Age'],
+                            "Monthly Income": f"${app_row['Income']}",
+                            "Employment Status": app_row['Employment_Status'],
+                            "Loan Amount Requested": f"${app_row['Loan_Amount']}",
+                            "Loan Purpose": app_row['Loan_Purpose'],
+                            "Current Status": app_row['Status']
+                        },
+                        "Generated Features": {},
+                        "Model Prediction": "Pending"
+                    }
 
-                    # Show the HTML inline
-                    with st.expander("View Loan Report (HTML Preview)", expanded=True):
-                        st.components.v1.html(html_report, height=700, scrolling=True)
+                    # Populate Generated Features
+                    for feature in IMPORTANT_GENERATED_FEATURES:
+                        value = feature_row.get(feature, "N/A")
+                        if feature in label_encoders:
+                            try:
+                                decoded_value = label_encoders[feature].inverse_transform([value])[0]
+                                display_value = decoded_value.replace("_", " ").capitalize()
+                            except:
+                                display_value = value
+                        else:
+                            display_value = value
+                        report_data["Generated Features"][feature.replace('_', ' ')] = display_value
 
-                    # Convert HTML to PDF with WeasyPrint
-                    pdf_bytes = html_to_pdf(html_report)
-                    if pdf_bytes:
-                        st.download_button(
-                            label="Download PDF",
-                            data=pdf_bytes,
-                            file_name=f"LoanReport_{selected_app_id}.pdf",
-                            mime="application/pdf"
-                        )
+                    # Populate Model Prediction
+                    if "Loan_Decision" in label_encoders and "Loan_Decision" in feature_row:
+                        try:
+                            prediction_encoded = feature_row["Loan_Decision"]
+                            prediction = label_encoders["Loan_Decision"].inverse_transform([prediction_encoded])[0]
+                            report_data["Model Prediction"] = prediction
+                        except:
+                            report_data["Model Prediction"] = "Error in prediction"
+                    else:
+                        report_data["Model Prediction"] = "Pending"
+
+                    # ---------------------- DISPLAY REPORT ----------------------
+                    st.markdown("### 📝 Loan Application Report")
+                    
+                    # Applicant Information
+                    with st.container():
+                        st.markdown("#### 📄 Applicant Information")
+                        cols_applicant = st.columns(2)
+                        for idx, (key, value) in enumerate(report_data["Applicant Information"].items()):
+                            with cols_applicant[idx % 2]:
+                                st.write(f"**{key}:** {value}")
+
+                    # Generated Features
+                    with st.container():
+                        st.markdown("#### 🔍 Generated Features")
+                        cols_features = st.columns(2)
+                        for idx, (key, value) in enumerate(report_data["Generated Features"].items()):
+                            with cols_features[idx % 2]:
+                                st.write(f"**{key}:** {value}")
+
+                    
+
+                    # ---------------------- DOWNLOAD REPORT ----------------------
+                    # Prepare report data for download
+                    # Flatten the report data
+                    flat_report = {}
+                    for section, details in report_data.items():
+                        if isinstance(details, dict):
+                            for key, value in details.items():
+                                flat_report[f"{section} - {key}"] = value
+                        else:
+                            flat_report[section] = details
+
+                    # Convert to DataFrame for CSV
+                    report_df = pd.DataFrame([flat_report])
+
+                    # Download as CSV
+                    st.download_button(
+                        label="📥 Download Report as CSV",
+                        data=report_df.to_csv(index=False).encode('utf-8'),
+                        file_name=f"LoanReport_{selected_app_id}.csv",
+                        mime="text/csv"
+                    )
+
+                    # Download as TXT
+                    report_text = "Loan Application Report\n\n"
+                    for section, details in report_data.items():
+                        if isinstance(details, dict):
+                            report_text += f"{section}:\n"
+                            for key, value in details.items():
+                                report_text += f"  - {key}: {value}\n"
+                        else:
+                            report_text += f"{section}: {details}\n"
+                        report_text += "\n"
+                    st.download_button(
+                        label="📥 Download Report as TXT",
+                        data=report_text.encode('utf-8'),
+                        file_name=f"LoanReport_{selected_app_id}.txt",
+                        mime="text/plain"
+                    )
 
                 st.markdown("---")
                 st.write("### Update Application Status")
