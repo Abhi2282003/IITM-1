@@ -756,13 +756,7 @@ if st.session_state.authenticated:
                             with cols_features[idx % 2]:
                                 st.write(f"**{key}:** {value}")
 
-                    # Model Prediction
-                    with st.container():
-                        st.markdown("#### 🤖 Model Prediction")
-                        if report_data["Model Prediction"] != "Pending":
-                            st.success(f"**{report_data['Model Prediction']}**")
-                        else:
-                            st.warning("Model prediction is pending.")
+                    
 
                     # ---------------------- DOWNLOAD REPORT ----------------------
                     # Prepare report data for download
